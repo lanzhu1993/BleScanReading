@@ -1,5 +1,6 @@
 package com.josh.scan.ui
 
+import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.view.MenuItem
 import android.view.View
@@ -8,10 +9,14 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.animation.SlideInBottomAnimation
 import com.chad.library.adapter.base.listener.OnItemChildClickListener
+import com.inuker.bluetooth.library.Constants
+import com.inuker.bluetooth.library.connect.response.BleReadResponse
+import com.inuker.bluetooth.library.utils.BluetoothUtils
 import com.josh.scan.R
 import com.josh.scan.adapter.SensorReadingAdapter
 import com.josh.scan.base.BaseActivity
 import com.josh.scan.entity.ReadingsEntity
+import com.josh.scan.manager.ClientManager
 import com.josh.scan.utils.StatusBarUtil
 import kotlinx.android.synthetic.main.activity_sensor_readings.*
 
@@ -23,10 +28,12 @@ import kotlinx.android.synthetic.main.activity_sensor_readings.*
  * email:  1113799552@qq.com
  * version: v1.0
  */
-class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
+class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener, BleReadResponse {
 
 
     private var readingList = arrayListOf<ReadingsEntity>()
+    private var mDeviceMac = ""
+    private var mDevice : BluetoothDevice? = null
 
 
     private val mAdapter by lazy {
@@ -50,6 +57,9 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
     }
 
     override fun initData() {
+        mDeviceMac = intent.getStringExtra("MAC")?:""
+        mDevice = BluetoothUtils.getRemoteDevice(mDeviceMac)
+
         readingList.add(ReadingsEntity("钠", "暂无～"))
         readingList.add(ReadingsEntity("钾", "暂无～"))
         readingList.add(ReadingsEntity("钙", "暂无～"))
@@ -61,6 +71,20 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
 
     override fun initListener() {
         mAdapter.setOnItemChildClickListener(this)
+        //读取数据开始点击事件
+        mSensorStartBtn.setOnClickListener {
+            if (null != mDevice){
+                ClientManager.instance.getClient().connect(mDeviceMac) { code, data ->
+                    if (code == Constants.REQUEST_SUCCESS) {
+                        data.services.forEach {s->
+                            s.characters.forEach {c->
+                                ClientManager.instance.getClient().read(mDeviceMac,s.uuid,c.uuid,this)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
@@ -76,5 +100,10 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
             }
         }
         return true
+    }
+
+    //获取蓝牙数据
+    override fun onResponse(code: Int, data: ByteArray?) {
+
     }
 }
