@@ -8,12 +8,15 @@ android {
 
     defaultConfig {
         applicationId "com.josh.scan"
-        minSdkVersion 18
+        minSdkVersion 19
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        multiDexEnabled true
+
     }
 
     buildTypes {
@@ -45,7 +48,8 @@ dependencies {
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:3.0.4'
     implementation 'io.reactivex.rxjava3:rxjava:3.0.4'
     implementation 'com.github.tbruyelle:rxpermissions:0.12'
-    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    implementation 'com.github.AnyChart:AnyChart-Android:1.1.2'
+    implementation 'org.litepal.guolindev:core:3.2.1'
 
 
 

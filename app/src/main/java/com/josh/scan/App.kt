@@ -1,6 +1,7 @@
 package com.josh.scan
 
 import android.app.Application
+import org.litepal.LitePal
 
 /**
  * description:
@@ -20,6 +21,7 @@ class App :Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        LitePal.initialize(this);
     }
 
 }
