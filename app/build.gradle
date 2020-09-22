@@ -19,10 +19,53 @@ android {
 
     }
 
+    signingConfigs {
+        release {
+            keyAlias "bluescan"
+            keyPassword "bluescan"
+            storeFile file("../bluescan.jks")
+            storePassword "bluescan"
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+        debug {
+            keyAlias "bluescan"
+            keyPassword "bluescan"
+            storeFile file("../bluescan.jks")
+            storePassword "bluescan"
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "boolean", "LOG_DEBUG", "false"  // 不显示Log
+            minifyEnabled false                      //混淆
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release    //签名
+        }
+        debug {
+            signingConfig signingConfigs.debug    //签名
+        }
+
+        applicationVariants.all {
+            variant ->
+                variant.outputs.all {
+                    Calendar calendar = Calendar.getInstance(Locale.CHINA);
+                    def buildDate = String.format(Locale.CHINA, "%04d%02d%02d", calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DAY_OF_MONTH))
+                    def versionName = versionName
+                    //android studio3.0之前的写法
+                    //    output->output.outputFile=new File(output.outputFile.parent,output.outputFile.name.replace(".apk","-"+defaultConfig.versionName+".apk"))
+                    //android studio3.0的写法
+                    //项目名-版本名-版本号-release/debug.apk
+                    if (variant.buildType.name == 'release') {
+                        outputFileName = "Blue_Scan-v${versionName}-${buildDate}-release.apk"
+                    } else {
+                        outputFileName = "Blue_Scan-v${versionName}-${buildDate}-debug.apk"
+                    }
+                }
         }
     }
     compileOptions {
