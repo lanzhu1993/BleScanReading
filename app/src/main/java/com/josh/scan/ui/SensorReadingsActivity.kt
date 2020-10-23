@@ -24,6 +24,8 @@ import com.josh.scan.utils.ToastUtils
 import kotlinx.android.synthetic.main.activity_sensor_readings.*
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.concurrent.fixedRateTimer
+import kotlin.math.pow
 
 /**
  * description:
@@ -41,6 +43,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
     private var gattServices: ArrayList<BluetoothGattService> = ArrayList()
 
 
+    private lateinit var timer: Timer
 
     companion object{
         const val GATT_SERVICE = "GATT_SERVICE"
@@ -82,55 +85,13 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
         mAdapter.setOnItemChildClickListener(this)
         //读取数据开始点击事件
         mSensorStartBtn.setOnClickListener {
-            val connectDevices = Ble.getInstance<BleDevice>().connectedDevices
-            if (!connectDevices.isNullOrEmpty()){
-                gattServices.forEach { gattService ->
-                    gattService.characteristics.forEach {characteristic ->
-                        val serviceUuid: UUID = characteristic.service.uuid
-                        val characteristicUuid: UUID = characteristic.uuid
-                        val charaProp = characteristic.properties
-                        //读操作
-                        if ((charaProp and BluetoothGattCharacteristic.PROPERTY_READ) != 0){
-                            Ble.getInstance<BleDevice>().readByUuid(
-                                connectDevices[0], serviceUuid, characteristicUuid,
-                                object : BleReadCallback<BleDevice?>() {
-                                    override fun onReadSuccess(dedvice: BleDevice?, characteristic: BluetoothGattCharacteristic) {
-                                        super.onReadSuccess(dedvice, characteristic)
-                                        runOnUiThread {
-                                            ToastUtils.showToast(String.format(
-                                                "value: %s%s",
-                                                "(0x)",
-                                                ByteUtils.bytes2HexStr(characteristic.value)
-                                            ))
-                                        }
-                                    }
-
-                                    override fun onReadFailed(device: BleDevice?, failedCode: Int) {
-                                        super.onReadFailed(device, failedCode)
-                                        ToastUtils.showToast("读取特征失败:$failedCode")
-                                    }
-                                })
-                        }
-                        //写操作
-                        if ((charaProp and BluetoothGattCharacteristic.PROPERTY_WRITE) != 0 || (charaProp and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
-                            Ble.getInstance<BleDevice>().writeByUuid(
-                                connectDevices[0], ByteUtils.hexStr2Bytes("FF"), serviceUuid, characteristicUuid,
-                                object : BleWriteCallback<BleDevice?>() {
-                                    override fun onWriteSuccess(device: BleDevice?, characteristic: BluetoothGattCharacteristic) {
-                                        ToastUtils.showToast("写入特征成功")
-                                    }
-
-                                    override fun onWriteFailed(device: BleDevice?, failedCode: Int) {
-                                        super.onWriteFailed(device, failedCode)
-                                        ToastUtils.showToast("写入特征失败:$failedCode")
-                                    }
-                                })
-                        }
-
-                    }
-                }
-            }
-
+            getSensorReadings()
+        }
+        mSensorTrackBtn.setOnClickListener {
+            startTimer()
+        }
+        mSensorPauseBtn.setOnClickListener {
+            stopTimer()
         }
     }
 
@@ -147,6 +108,87 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
             }
         }
         return true
+    }
+
+
+    private fun showSensorReadingData(data:String){
+        val a = 6.5
+        val b = 0.3
+        if (data.length == 14){
+            readingList.forEachIndexed { index, readingsEntity ->
+                val parseInt = Integer.parseInt(data.substring(2 * index, 2 * index + 2), 16).toDouble()/100
+//                val pow = (parseInt -a)/b
+//                val reading = 10.toDouble().pow(pow).toInt()
+//                readingsEntity.readings = reading.toString()
+                readingsEntity.readings = parseInt.toString()
+                mAdapter.notifyItemChanged(index)
+            }
+        }
+    }
+
+    private fun startTimer() {
+        timer = fixedRateTimer("", false, 0, 10000) {
+            runOnUiThread {
+                ToastUtils.showToast("开始追踪")
+            }
+            getSensorReadings()
+        }
+    }
+
+    private fun stopTimer() {
+        timer.cancel()
+        runOnUiThread {
+            ToastUtils.showToast("结束追踪")
+        }
+    }
+
+
+    private fun getSensorReadings(){
+        val connectDevices = Ble.getInstance<BleDevice>().connectedDevices
+        if (!connectDevices.isNullOrEmpty()){
+            gattServices.forEach { gattService ->
+                gattService.characteristics.forEach {characteristic ->
+                    val serviceUuid: UUID = characteristic.service.uuid
+                    val characteristicUuid: UUID = characteristic.uuid
+                    val charaProp = characteristic.properties
+                    //读操作
+                    if ((charaProp and BluetoothGattCharacteristic.PROPERTY_READ) != 0){
+                        Ble.getInstance<BleDevice>().readByUuid(
+                            connectDevices[0], serviceUuid, characteristicUuid,
+                            object : BleReadCallback<BleDevice?>() {
+                                override fun onReadSuccess(dedvice: BleDevice?, characteristic: BluetoothGattCharacteristic) {
+                                    super.onReadSuccess(dedvice, characteristic)
+                                    runOnUiThread {
+                                        showSensorReadingData(ByteUtils.bytes2HexStr(characteristic.value))
+                                    }
+                                }
+
+                                override fun onReadFailed(device: BleDevice?, failedCode: Int) {
+                                    super.onReadFailed(device, failedCode)
+                                    ToastUtils.showToast("读取特征失败:$failedCode")
+                                }
+                            })
+                    }
+                    //写操作
+                    if ((charaProp and BluetoothGattCharacteristic.PROPERTY_WRITE) != 0 || (charaProp and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
+                        Ble.getInstance<BleDevice>().writeByUuid(
+                            connectDevices[0], ByteUtils.hexStr2Bytes("FEFF"), serviceUuid, characteristicUuid,
+                            object : BleWriteCallback<BleDevice?>() {
+                                override fun onWriteSuccess(device: BleDevice?, characteristic: BluetoothGattCharacteristic) {
+                                    ToastUtils.showToast("写入特征成功")
+                                }
+
+                                override fun onWriteFailed(device: BleDevice?, failedCode: Int) {
+                                    super.onWriteFailed(device, failedCode)
+                                    ToastUtils.showToast("写入特征失败:$failedCode")
+                                }
+                            })
+                    }
+
+                }
+            }
+        }
+
     }
 
 }
