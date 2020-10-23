@@ -1,24 +1,29 @@
 package com.josh.scan.ui
 
-import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattService
 import android.content.Intent
 import android.view.MenuItem
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
+import cn.com.heaton.blelibrary.ble.Ble
+import cn.com.heaton.blelibrary.ble.callback.BleReadCallback
+import cn.com.heaton.blelibrary.ble.callback.BleWriteCallback
+import cn.com.heaton.blelibrary.ble.model.BleDevice
+import cn.com.heaton.blelibrary.ble.utils.ByteUtils
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.animation.SlideInBottomAnimation
 import com.chad.library.adapter.base.listener.OnItemChildClickListener
-import com.inuker.bluetooth.library.Constants
-import com.inuker.bluetooth.library.connect.response.BleReadResponse
-import com.inuker.bluetooth.library.utils.BluetoothUtils
 import com.josh.scan.R
 import com.josh.scan.adapter.SensorReadingAdapter
 import com.josh.scan.base.BaseActivity
 import com.josh.scan.entity.ReadingsEntity
-import com.josh.scan.manager.ClientManager
 import com.josh.scan.utils.StatusBarUtil
+import com.josh.scan.utils.ToastUtils
 import kotlinx.android.synthetic.main.activity_sensor_readings.*
+import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * description:
@@ -28,13 +33,18 @@ import kotlinx.android.synthetic.main.activity_sensor_readings.*
  * email:  1113799552@qq.com
  * version: v1.0
  */
-class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener, BleReadResponse {
+class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
 
 
     private var readingList = arrayListOf<ReadingsEntity>()
-    private var mDeviceMac = ""
-    private var mDevice : BluetoothDevice? = null
 
+    private var gattServices: ArrayList<BluetoothGattService> = ArrayList()
+
+
+
+    companion object{
+        const val GATT_SERVICE = "GATT_SERVICE"
+    }
 
     private val mAdapter by lazy {
         SensorReadingAdapter()
@@ -57,8 +67,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener, BleRead
     }
 
     override fun initData() {
-        mDeviceMac = intent.getStringExtra("MAC")?:""
-        mDevice = BluetoothUtils.getRemoteDevice(mDeviceMac)
+        gattServices = intent.getParcelableArrayListExtra(GATT_SERVICE)?: arrayListOf()
 
         readingList.add(ReadingsEntity("钠", "暂无～"))
         readingList.add(ReadingsEntity("钾", "暂无～"))
@@ -73,17 +82,55 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener, BleRead
         mAdapter.setOnItemChildClickListener(this)
         //读取数据开始点击事件
         mSensorStartBtn.setOnClickListener {
-            if (null != mDevice){
-                ClientManager.instance.getClient().connect(mDeviceMac) { code, data ->
-                    if (code == Constants.REQUEST_SUCCESS) {
-                        data.services.forEach {s->
-                            s.characters.forEach {c->
-                                ClientManager.instance.getClient().read(mDeviceMac,s.uuid,c.uuid,this)
-                            }
+            val connectDevices = Ble.getInstance<BleDevice>().connectedDevices
+            if (!connectDevices.isNullOrEmpty()){
+                gattServices.forEach { gattService ->
+                    gattService.characteristics.forEach {characteristic ->
+                        val serviceUuid: UUID = characteristic.service.uuid
+                        val characteristicUuid: UUID = characteristic.uuid
+                        val charaProp = characteristic.properties
+                        //读操作
+                        if ((charaProp and BluetoothGattCharacteristic.PROPERTY_READ) != 0){
+                            Ble.getInstance<BleDevice>().readByUuid(
+                                connectDevices[0], serviceUuid, characteristicUuid,
+                                object : BleReadCallback<BleDevice?>() {
+                                    override fun onReadSuccess(dedvice: BleDevice?, characteristic: BluetoothGattCharacteristic) {
+                                        super.onReadSuccess(dedvice, characteristic)
+                                        runOnUiThread {
+                                            ToastUtils.showToast(String.format(
+                                                "value: %s%s",
+                                                "(0x)",
+                                                ByteUtils.bytes2HexStr(characteristic.value)
+                                            ))
+                                        }
+                                    }
+
+                                    override fun onReadFailed(device: BleDevice?, failedCode: Int) {
+                                        super.onReadFailed(device, failedCode)
+                                        ToastUtils.showToast("读取特征失败:$failedCode")
+                                    }
+                                })
                         }
+                        //写操作
+                        if ((charaProp and BluetoothGattCharacteristic.PROPERTY_WRITE) != 0 || (charaProp and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
+                            Ble.getInstance<BleDevice>().writeByUuid(
+                                connectDevices[0], ByteUtils.hexStr2Bytes("FF"), serviceUuid, characteristicUuid,
+                                object : BleWriteCallback<BleDevice?>() {
+                                    override fun onWriteSuccess(device: BleDevice?, characteristic: BluetoothGattCharacteristic) {
+                                        ToastUtils.showToast("写入特征成功")
+                                    }
+
+                                    override fun onWriteFailed(device: BleDevice?, failedCode: Int) {
+                                        super.onWriteFailed(device, failedCode)
+                                        ToastUtils.showToast("写入特征失败:$failedCode")
+                                    }
+                                })
+                        }
+
                     }
                 }
             }
+
         }
     }
 
@@ -102,8 +149,4 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener, BleRead
         return true
     }
 
-    //获取蓝牙数据
-    override fun onResponse(code: Int, data: ByteArray?) {
-
-    }
 }
