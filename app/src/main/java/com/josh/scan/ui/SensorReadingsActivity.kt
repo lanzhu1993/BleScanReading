@@ -22,9 +22,12 @@ import com.josh.scan.entity.ReadingsEntity
 import com.josh.scan.utils.StatusBarUtil
 import com.josh.scan.utils.ToastUtils
 import kotlinx.android.synthetic.main.activity_sensor_readings.*
+import java.math.RoundingMode
+import java.text.NumberFormat
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.concurrent.fixedRateTimer
+import kotlin.math.abs
 import kotlin.math.pow
 
 /**
@@ -117,11 +120,15 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
         if (data.length == 14) {
             readingList.forEachIndexed { index, readingsEntity ->
                 val parseInt =
-                    Integer.parseInt(data.substring(2 * index, 2 * index + 2), 16).toDouble() / 100
-//                val pow = (parseInt -a)/b
-//                val reading = 10.toDouble().pow(pow).toInt()
-//                readingsEntity.readings = reading.toString()
-                readingsEntity.readings = parseInt.toString()
+                    Integer.parseInt(data.substring(2 * (index+1), 2 * (index+1) + 2), 16).toFloat() / 100
+                val pow = abs((parseInt -a) /b)
+                val reading = 10.toDouble().pow(pow)
+                val nf: NumberFormat = NumberFormat.getNumberInstance()
+
+                nf.maximumFractionDigits = 2
+                nf.roundingMode = RoundingMode.UP
+                val format: String = nf.format(reading)
+                readingsEntity.readings = format
                 mAdapter.notifyItemChanged(index)
             }
         }
