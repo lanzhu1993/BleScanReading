@@ -43,9 +43,9 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
     private var gattServices: ArrayList<BluetoothGattService> = ArrayList()
 
 
-    private lateinit var timer: Timer
+    private var timer: Timer? = null
 
-    companion object{
+    companion object {
         const val GATT_SERVICE = "GATT_SERVICE"
     }
 
@@ -70,7 +70,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
     }
 
     override fun initData() {
-        gattServices = intent.getParcelableArrayListExtra(GATT_SERVICE)?: arrayListOf()
+        gattServices = intent.getParcelableArrayListExtra(GATT_SERVICE) ?: arrayListOf()
 
         readingList.add(ReadingsEntity("钠", "暂无～"))
         readingList.add(ReadingsEntity("钾", "暂无～"))
@@ -97,7 +97,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
 
 
     override fun onItemChildClick(adapter: BaseQuickAdapter<*, *>, view: View, position: Int) {
-        startActivity(Intent(this,AnalyseTrendsActivity::class.java))
+        startActivity(Intent(this, AnalyseTrendsActivity::class.java))
     }
 
 
@@ -111,12 +111,13 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
     }
 
 
-    private fun showSensorReadingData(data:String){
+    private fun showSensorReadingData(data: String) {
         val a = 6.5
         val b = 0.3
-        if (data.length == 14){
+        if (data.length == 14) {
             readingList.forEachIndexed { index, readingsEntity ->
-                val parseInt = Integer.parseInt(data.substring(2 * index, 2 * index + 2), 16).toDouble()/100
+                val parseInt =
+                    Integer.parseInt(data.substring(2 * index, 2 * index + 2), 16).toDouble() / 100
 //                val pow = (parseInt -a)/b
 //                val reading = 10.toDouble().pow(pow).toInt()
 //                readingsEntity.readings = reading.toString()
@@ -136,27 +137,30 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
     }
 
     private fun stopTimer() {
-        timer.cancel()
+        timer?.cancel()
         runOnUiThread {
             ToastUtils.showToast("结束追踪")
         }
     }
 
 
-    private fun getSensorReadings(){
+    private fun getSensorReadings() {
         val connectDevices = Ble.getInstance<BleDevice>().connectedDevices
-        if (!connectDevices.isNullOrEmpty()){
+        if (!connectDevices.isNullOrEmpty()) {
             gattServices.forEach { gattService ->
-                gattService.characteristics.forEach {characteristic ->
+                gattService.characteristics.forEach { characteristic ->
                     val serviceUuid: UUID = characteristic.service.uuid
                     val characteristicUuid: UUID = characteristic.uuid
                     val charaProp = characteristic.properties
                     //读操作
-                    if ((charaProp and BluetoothGattCharacteristic.PROPERTY_READ) != 0){
+                    if ((charaProp and BluetoothGattCharacteristic.PROPERTY_READ) != 0) {
                         Ble.getInstance<BleDevice>().readByUuid(
                             connectDevices[0], serviceUuid, characteristicUuid,
                             object : BleReadCallback<BleDevice?>() {
-                                override fun onReadSuccess(dedvice: BleDevice?, characteristic: BluetoothGattCharacteristic) {
+                                override fun onReadSuccess(
+                                    dedvice: BleDevice?,
+                                    characteristic: BluetoothGattCharacteristic
+                                ) {
                                     super.onReadSuccess(dedvice, characteristic)
                                     runOnUiThread {
                                         showSensorReadingData(ByteUtils.bytes2HexStr(characteristic.value))
@@ -172,9 +176,15 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
                     //写操作
                     if ((charaProp and BluetoothGattCharacteristic.PROPERTY_WRITE) != 0 || (charaProp and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
                         Ble.getInstance<BleDevice>().writeByUuid(
-                            connectDevices[0], ByteUtils.hexStr2Bytes("FEFF"), serviceUuid, characteristicUuid,
+                            connectDevices[0],
+                            ByteUtils.hexStr2Bytes("FEFF"),
+                            serviceUuid,
+                            characteristicUuid,
                             object : BleWriteCallback<BleDevice?>() {
-                                override fun onWriteSuccess(device: BleDevice?, characteristic: BluetoothGattCharacteristic) {
+                                override fun onWriteSuccess(
+                                    device: BleDevice?,
+                                    characteristic: BluetoothGattCharacteristic
+                                ) {
                                     ToastUtils.showToast("写入特征成功")
                                 }
 
