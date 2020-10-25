@@ -14,7 +14,11 @@
       "versionCode": 1,
       "versionName": "1.0",
       "enabled": true,
+<<<<<<< HEAD
       "outputFile": "Blue_Scan-v1.0-20200926-release.apk"
+=======
+      "outputFile": "Blue_Scan-v1.0-20200922-release.apk"
+>>>>>>> af2be23ee1ad6735975ca0cd10a0068cd71f0b1a
     }
   ]
 }

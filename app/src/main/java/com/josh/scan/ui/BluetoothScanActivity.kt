@@ -1,20 +1,21 @@
 package com.josh.scan.ui
 
+import android.text.TextUtils
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import cn.com.heaton.blelibrary.ble.Ble
+import cn.com.heaton.blelibrary.ble.callback.BleScanCallback
+import cn.com.heaton.blelibrary.ble.model.ScanRecord
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.animation.SlideInBottomAnimation
 import com.chad.library.adapter.base.listener.OnItemChildClickListener
-import com.inuker.bluetooth.library.search.SearchRequest
-import com.inuker.bluetooth.library.search.SearchResult
-import com.inuker.bluetooth.library.search.response.SearchResponse
 import com.josh.scan.R
 import com.josh.scan.adapter.BluetoothItemAdapter
 import com.josh.scan.base.BaseActivity
-import com.josh.scan.manager.ClientManager
+import com.josh.scan.entity.BleRssiDevice
 import com.josh.scan.utils.StatusBarUtil
 import kotlinx.android.synthetic.main.activity_bluetooth_scan.*
 
@@ -26,14 +27,22 @@ import kotlinx.android.synthetic.main.activity_bluetooth_scan.*
  * email:  1113799552@qq.com
  * version: v1.0
  */
-class BluetoothScanActivity : BaseActivity(), SearchResponse, OnItemChildClickListener {
+class BluetoothScanActivity : BaseActivity(), OnItemChildClickListener {
+
+
+    private val ble = Ble.getInstance<BleRssiDevice>()
 
 
     private val mAdapter by lazy {
         BluetoothItemAdapter()
     }
 
-    private var mDeviceList = arrayListOf<SearchResult?>()
+    private var mDeviceList = arrayListOf<BleRssiDevice>()
+
+    companion object {
+        const val EXTRA_TAG = "device"
+    }
+
 
     override fun getLayout() = R.layout.activity_bluetooth_scan
 
@@ -47,64 +56,79 @@ class BluetoothScanActivity : BaseActivity(), SearchResponse, OnItemChildClickLi
         mAdapter.adapterAnimation = SlideInBottomAnimation()
         mAdapter.addChildClickViewIds(R.id.deviceCl)
         searchDevice()
-
     }
 
     override fun initData() {
     }
 
     private fun searchDevice() {
-        val request = SearchRequest.Builder()
-            .searchBluetoothLeDevice(5000, 2).build()
-        ClientManager.instance.getClient().search(request, this)
+        if (ble != null && !ble.isScanning) {
+            ble.startScan(scanCallback)
+
+        }
     }
 
     override fun initListener() {
         mAdapter.setOnItemChildClickListener(this)
     }
 
-    override fun onSearchStopped() {
-
-    }
-
-    override fun onSearchStarted() {
-        mDeviceList.clear();
-        mAdapter.setNewInstance(mDeviceList)
-    }
-
-    override fun onDeviceFounded(device: SearchResult?) {
-        runOnUiThread {
-            if (!mDeviceList.contains(device)) {
-                mDeviceList.add(device)
-                mAdapter.setNewInstance(mDeviceList)
-                mAdapter.notifyDataSetChanged()
-            }
-
-        }
-    }
-
-    override fun onSearchCanceled() {
-        TODO("Not yet implemented")
-    }
 
     override fun onPause() {
         super.onPause()
-        ClientManager.instance.getClient().stopSearch()
+        if (ble.isScanning) {
+            ble.stopScan()
+        }
     }
 
     override fun onItemChildClick(adapter: BaseQuickAdapter<*, *>, view: View, position: Int) {
-        intent.putExtra("MAC",mDeviceList[position]?.address)
-        setResult(MainActivity.DEVICE_RESULT_CODE,intent)
+        intent.putExtra(EXTRA_TAG, mDeviceList[position])
+        setResult(MainActivity.DEVICE_RESULT_CODE, intent)
         finish()
     }
 
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when(item.itemId){
-            android.R.id.home ->{
+        when (item.itemId) {
+            android.R.id.home -> {
                 finish()
             }
         }
         return true
+    }
+
+    private val scanCallback = object : BleScanCallback<BleRssiDevice>() {
+
+        override fun onStart() {
+            Log.e("lanzhu", "onStart: ")
+        }
+
+        override fun onStop() {
+            Log.e("lanzhu", "onStop: " )
+
+        }
+
+        override fun onLeScan(device: BleRssiDevice?, rssi: Int, scanRecord: ByteArray?) {
+            if (TextUtils.isEmpty(device!!.bleName)) return
+
+            synchronized(ble.locker) {
+                for (i in mDeviceList.indices) {
+                    val rssiDevice: BleRssiDevice = mDeviceList.get(i)
+                    if (TextUtils.equals(rssiDevice.bleAddress, device.bleAddress)) {
+                        if (rssiDevice.rssi !== rssi && System.currentTimeMillis() - rssiDevice.rssiUpdateTime > 1000L) {
+                            rssiDevice.rssiUpdateTime = System.currentTimeMillis()
+                            rssiDevice.rssi = rssi
+                            mAdapter.notifyItemChanged(i)
+                        }
+                        return
+                    }
+                }
+                device.scanRecord = ScanRecord.parseFromBytes(scanRecord)
+                device.rssi = rssi
+                mDeviceList.add(device)
+                mAdapter.setNewInstance(mDeviceList.toMutableList())
+                mAdapter.notifyDataSetChanged()
+            }
+
+        }
     }
 }
