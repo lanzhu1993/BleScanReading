@@ -1,25 +1,20 @@
 package com.josh.scan.ui
 
-import android.graphics.Color
+import android.view.MenuItem
 import androidx.core.content.ContextCompat
-import com.github.mikephil.charting.components.Legend
-import com.github.mikephil.charting.components.XAxis
-import com.github.mikephil.charting.components.YAxis
-import com.github.mikephil.charting.components.YAxis.AxisDependency
-import com.github.mikephil.charting.data.Entry
-import com.github.mikephil.charting.data.LineData
-import com.github.mikephil.charting.data.LineDataSet
-import com.github.mikephil.charting.formatter.ValueFormatter
-import com.github.mikephil.charting.utils.ColorTemplate
+import com.anychart.AnyChart
+import com.anychart.chart.common.dataentry.DataEntry
+import com.anychart.chart.common.dataentry.ValueDataEntry
+import com.anychart.data.Set
+import com.anychart.enums.Anchor
+import com.anychart.enums.MarkerType
+import com.anychart.enums.TooltipPositionMode
+import com.anychart.graphics.vector.Stroke
 import com.josh.scan.R
 import com.josh.scan.base.BaseActivity
 import com.josh.scan.utils.StatusBarUtil
 import kotlinx.android.synthetic.main.activity_analyse_trends.*
-import java.text.SimpleDateFormat
-import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.collections.ArrayList
-import kotlin.collections.MutableMap.MutableEntry
+import java.util.ArrayList
 
 
 /**
@@ -36,122 +31,89 @@ class AnalyseTrendsActivity :BaseActivity() {
     override fun initView() {
         StatusBarUtil.setColor(this, ContextCompat.getColor(this, R.color.color_0A5566), 0)
         supportActionBar?.title = "数据分析"
-        initLineChart()
-        setData(100,50f)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        val cartesian = AnyChart.line()
+        cartesian.animation(true)
+
+        cartesian.padding(10.0, 20.0, 5.0, 20.0)
+
+        cartesian.crosshair().enabled(false)
+        cartesian.crosshair()
+            .yLabel(false) // TODO ystroke
+            .yStroke(
+                null as Stroke?,
+                null,
+                null,
+                null as String?,
+                null as String?
+            )
+
+        cartesian.tooltip().positionMode(TooltipPositionMode.POINT)
+
+        val seriesData: MutableList<DataEntry> = ArrayList()
+        seriesData.add(ValueDataEntry("1986", 3.6))
+        seriesData.add(ValueDataEntry("1987", 7.1))
+        seriesData.add(ValueDataEntry("1988", 8.5))
+        seriesData.add(ValueDataEntry("1989", 9.2))
+        seriesData.add(ValueDataEntry("1990", 10.1))
+        seriesData.add(ValueDataEntry("1991", 11.6))
+        seriesData.add(ValueDataEntry("1992", 16.4))
+        seriesData.add(ValueDataEntry("1993", 18.0))
+        seriesData.add(ValueDataEntry("1994", 13.2))
+        seriesData.add(ValueDataEntry("1995", 12.0))
+        seriesData.add(ValueDataEntry("1996", 3.2))
+        seriesData.add(ValueDataEntry("1997", 4.1))
+        seriesData.add(ValueDataEntry("1998", 6.3))
+        seriesData.add(ValueDataEntry("1999", 9.4))
+        seriesData.add(ValueDataEntry("2000", 11.5))
+        seriesData.add(ValueDataEntry("2001", 13.5))
+        seriesData.add(ValueDataEntry("2002", 14.8))
+        seriesData.add(ValueDataEntry("2003", 16.6))
+        seriesData.add(ValueDataEntry("2004", 18.1))
+        seriesData.add(ValueDataEntry("2005", 17.0))
+        seriesData.add(ValueDataEntry("2006", 16.6))
+        seriesData.add(ValueDataEntry("2007", 14.1))
+        seriesData.add(ValueDataEntry("2008", 15.7))
+        seriesData.add(ValueDataEntry("2009", 12.0))
+
+        val set = Set.instantiate()
+        set.data(seriesData)
+        val series1Mapping = set.mapAs("{ x: 'x', value: 'value' }")
+
+        val series1 = cartesian.line(series1Mapping)
+        series1.name("Brandy")
+        series1.hovered().markers().enabled(false)
+        series1.hovered().markers()
+            .type(MarkerType.CIRCLE)
+            .size(4.0)
+        series1.tooltip()
+            .position("right")
+            .anchor(Anchor.LEFT_CENTER)
+            .offsetX(5.0)
+            .offsetY(5.0)
+
+
+
+        cartesian.legend().enabled(true)
+        cartesian.legend().fontSize(13.0)
+        cartesian.legend().padding(0.0, 0.0, 10.0, 0.0)
+        cartesian.credits().enabled(false)
+        cartesian.credits().text("")
+        anyChartView.setChart(cartesian)
     }
+
 
     override fun initData() {
     }
 
-
-    private fun initLineChart() {
-        // no description text
-        analyseLineChart.getDescription().setEnabled(false)
-        // enable touch gestures
-        analyseLineChart.setTouchEnabled(true)
-
-        analyseLineChart.setDragDecelerationFrictionCoef(0.9f)
-
-        // enable scaling and dragging
-
-        // enable scaling and dragging
-        analyseLineChart.setDragEnabled(true)
-        analyseLineChart.setScaleEnabled(true)
-        analyseLineChart.setDrawGridBackground(false)
-        analyseLineChart.setHighlightPerDragEnabled(true)
-
-        // set an alternative background color
-
-        // set an alternative background color
-        analyseLineChart.setBackgroundColor(Color.WHITE)
-        analyseLineChart.setViewPortOffsets(0f, 0f, 0f, 0f)
-
-        // add data
-
-        // add data
-//        seekBarX.setProgress(100)
-
-        // get the legend (only possible after setting data)
-
-        // get the legend (only possible after setting data)
-        val l: Legend = analyseLineChart.getLegend()
-        l.isEnabled = false
-
-        val xAxis: XAxis = analyseLineChart.getXAxis()
-        xAxis.position = XAxis.XAxisPosition.TOP_INSIDE
-//        xAxis.typeface = Typeface.tfLight
-        xAxis.textSize = 10f
-        xAxis.textColor = Color.WHITE
-        xAxis.setDrawAxisLine(false)
-        xAxis.setDrawGridLines(true)
-        xAxis.textColor = Color.rgb(255, 192, 56)
-        xAxis.setCenterAxisLabels(true)
-        xAxis.granularity = 1f // one hour
-
-        xAxis.valueFormatter = object : ValueFormatter() {
-            private val mFormat: SimpleDateFormat = SimpleDateFormat("dd MMM HH:mm", Locale.CHINA)
-            override fun getFormattedValue(value: Float): String {
-                val millis: Long = TimeUnit.HOURS.toMillis(value.toLong())
-                return mFormat.format(Date(millis))
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+            android.R.id.home ->{
+                finish()
             }
         }
-
-        val leftAxis: YAxis = analyseLineChart.getAxisLeft()
-        leftAxis.setPosition(YAxis.YAxisLabelPosition.INSIDE_CHART)
-//        leftAxis.typeface = tfLight
-        leftAxis.textColor = ColorTemplate.getHoloBlue()
-        leftAxis.setDrawGridLines(true)
-        leftAxis.isGranularityEnabled = true
-        leftAxis.axisMinimum = 0f
-        leftAxis.axisMaximum = 170f
-        leftAxis.yOffset = -9f
-        leftAxis.textColor = Color.rgb(255, 192, 56)
-
-        val rightAxis: YAxis = analyseLineChart.getAxisRight()
-        rightAxis.isEnabled = false
+        return true
     }
 
 
-    private fun setData(count: Int, range: Float) {
-
-        // now in hours
-        val now = TimeUnit.MILLISECONDS.toHours(System.currentTimeMillis())
-        val values =  ArrayList<Entry>()
-
-        // count = hours
-        val to = now + count.toFloat()
-
-        // increment by 1 hour
-        var x = now.toFloat()
-        while (x < to) {
-            val y: Float = getRandom(range, 50f)
-            values.add(Entry(x, y)) // add one entry per hour
-            x++
-        }
-
-        // create a dataset and give it a type
-        val set1 = LineDataSet(values, "DataSet 1")
-        set1.axisDependency = AxisDependency.LEFT
-        set1.color = ColorTemplate.getHoloBlue()
-        set1.valueTextColor = ColorTemplate.getHoloBlue()
-        set1.lineWidth = 1.5f
-        set1.setDrawCircles(false)
-        set1.setDrawValues(false)
-        set1.fillAlpha = 65
-        set1.fillColor = ColorTemplate.getHoloBlue()
-        set1.highLightColor = Color.rgb(244, 117, 117)
-        set1.setDrawCircleHole(false)
-
-        // create a data object with the data sets
-        val data = LineData(set1)
-        data.setValueTextColor(Color.WHITE)
-        data.setValueTextSize(9f)
-
-        // set data
-        analyseLineChart.setData(data)
-    }
-
-    fun getRandom(range: Float, start: Float): Float {
-        return (Math.random() * range).toFloat() + start
-    }
 }

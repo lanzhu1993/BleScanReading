@@ -52,7 +52,12 @@ class MainActivity : BaseActivity() {
             ClientManager.instance.getClient().disconnect(mDeviceMac)
         }
         mainViewReadingsBtn.setOnClickListener {
-            startActivity(Intent(this,SensorReadingsActivity::class.java))
+            if (mDeviceMac.isEmpty()){
+                return@setOnClickListener
+            }
+            startActivity(Intent(this,SensorReadingsActivity::class.java).apply {
+                putExtra("MAC",mDeviceMac)
+            })
         }
     }
 
@@ -92,7 +97,7 @@ class MainActivity : BaseActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == DEVICE_REQUEST_CODE && resultCode == DEVICE_RESULT_CODE && null != data){
             mDeviceMac = data.getStringExtra("MAC")?:""
-            if (!mDeviceMac.isEmpty()){
+            if (mDeviceMac.isNotEmpty()){
                 ClientManager.instance.getClient().connect(mDeviceMac) { code, data ->
                     Log.e("lanzhu", "connect info code is $code , data is $data")
                 }
@@ -106,7 +111,7 @@ class MainActivity : BaseActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (!mDeviceMac.isEmpty()){
+        if (mDeviceMac.isNotEmpty()){
             ClientManager.instance.getClient().unregisterConnectStatusListener(mDeviceMac,mConnectStatusListener)
         }
     }
