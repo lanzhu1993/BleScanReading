@@ -128,7 +128,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
                 nf.maximumFractionDigits = 2
                 nf.roundingMode = RoundingMode.UP
                 val format: String = nf.format(reading)
-                readingsEntity.readings = format
+                readingsEntity.readings = parseInt.toString()
                 mAdapter.notifyItemChanged(index)
             }
         }
