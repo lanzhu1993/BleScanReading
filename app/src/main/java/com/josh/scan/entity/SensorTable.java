@@ -14,7 +14,7 @@ public class SensorTable extends LitePalSupport {
 
 
     private int type;
-    private long value;
+    private float value;
     private long create_time;
 
     public int getType() {
@@ -25,11 +25,11 @@ public class SensorTable extends LitePalSupport {
         this.type = type;
     }
 
-    public long getValue() {
+    public float getValue() {
         return value;
     }
 
-    public void setValue(long value) {
+    public void setValue(float value) {
         this.value = value;
     }
 

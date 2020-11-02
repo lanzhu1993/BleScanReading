@@ -3,6 +3,7 @@ package com.josh.scan.ui
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.content.Intent
+import android.text.format.DateUtils
 import android.view.MenuItem
 import android.view.View
 import androidx.core.content.ContextCompat
@@ -19,6 +20,8 @@ import com.josh.scan.R
 import com.josh.scan.adapter.SensorReadingAdapter
 import com.josh.scan.base.BaseActivity
 import com.josh.scan.entity.ReadingsEntity
+import com.josh.scan.entity.SensorTable
+import com.josh.scan.utils.DbUtils
 import com.josh.scan.utils.StatusBarUtil
 import com.josh.scan.utils.ToastUtils
 import kotlinx.android.synthetic.main.activity_sensor_readings.*
@@ -119,17 +122,24 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
         val b = 0.3
         if (data.length == 14) {
             readingList.forEachIndexed { index, readingsEntity ->
-                val parseInt =
-                    Integer.parseInt(data.substring(2 * (index+1), 2 * (index+1) + 2), 16).toFloat() / 100
-                val pow = abs((parseInt -a) /b)
-                val reading = 10.toDouble().pow(pow)
-                val nf: NumberFormat = NumberFormat.getNumberInstance()
+                if (index > 0){
+                    val parseInt =
+                        Integer.parseInt(data.substring(2 * (index+1), 2 * (index+1) + 2), 16).toFloat() / 100
+                    val pow = abs((parseInt -a) /b)
+                    val reading = 10.toDouble().pow(pow)
+                    val nf: NumberFormat = NumberFormat.getNumberInstance()
 
-                nf.maximumFractionDigits = 2
-                nf.roundingMode = RoundingMode.UP
-                val format: String = nf.format(reading)
-                readingsEntity.readings = parseInt.toString()
-                mAdapter.notifyItemChanged(index)
+                    nf.maximumFractionDigits = 2
+                    nf.roundingMode = RoundingMode.UP
+                    val format: String = nf.format(reading)
+                    readingsEntity.readings = parseInt.toString()
+                    mAdapter.notifyItemChanged(index)
+                    DbUtils.insertSensor(SensorTable().apply {
+                        type = index
+                        value = parseInt
+                        create_time = System.currentTimeMillis()
+                    })
+                }
             }
         }
     }
