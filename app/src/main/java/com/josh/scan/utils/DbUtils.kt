@@ -1,6 +1,7 @@
 package com.josh.scan.utils
 
 import com.josh.scan.entity.SensorTable
+import org.litepal.LitePal
 import org.litepal.LitePal.findAll
 
 /**
@@ -26,8 +27,6 @@ object DbUtils {
      * @return
      */
     fun querySensorTableByType(sensorType: Int): List<SensorTable> {
-        return findAll(SensorTable::class.java).filter {
-            it.type == sensorType
-        };
+        return LitePal.where("type = ?", "$sensorType").order("create_time").find(SensorTable::class.java)
     }
 }

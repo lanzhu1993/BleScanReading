@@ -3,7 +3,7 @@ package com.josh.scan.ui
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.content.Intent
-import android.text.format.DateUtils
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import androidx.core.content.ContextCompat
@@ -21,10 +21,14 @@ import com.josh.scan.adapter.SensorReadingAdapter
 import com.josh.scan.base.BaseActivity
 import com.josh.scan.entity.ReadingsEntity
 import com.josh.scan.entity.SensorTable
+import com.josh.scan.utils.DateUtils
 import com.josh.scan.utils.DbUtils
 import com.josh.scan.utils.StatusBarUtil
 import com.josh.scan.utils.ToastUtils
 import kotlinx.android.synthetic.main.activity_sensor_readings.*
+import org.litepal.LitePal
+import org.litepal.Operator.deleteAll
+import org.litepal.crud.LitePalSupport
 import java.math.RoundingMode
 import java.text.NumberFormat
 import java.util.*
@@ -77,7 +81,13 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
 
     override fun initData() {
         gattServices = intent.getParcelableArrayListExtra(GATT_SERVICE) ?: arrayListOf()
-
+        val time = DateUtils.getTimeStamp("yyyy-MM-dd",DateUtils.getDateNow("yyyy-MM-dd"))
+        LitePal.deleteAll(
+            SensorTable::class.java,
+            "create_time  < ? ",
+            "$time}"
+        )
+        Log.e("lanzhu", "time is : $time")
         readingList.add(ReadingsEntity("钠", "暂无～"))
         readingList.add(ReadingsEntity("钾", "暂无～"))
         readingList.add(ReadingsEntity("钙", "暂无～"))
@@ -103,7 +113,9 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
 
 
     override fun onItemChildClick(adapter: BaseQuickAdapter<*, *>, view: View, position: Int) {
-        startActivity(Intent(this, AnalyseTrendsActivity::class.java))
+        startActivity(Intent(this, AnalyseTrendsActivity::class.java).apply {
+            putExtra(AnalyseTrendsActivity.SENSOR_TYPE,position+1)
+        })
     }
 
 
@@ -122,24 +134,22 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
         val b = 0.3
         if (data.length == 14) {
             readingList.forEachIndexed { index, readingsEntity ->
-                if (index > 0){
-                    val parseInt =
-                        Integer.parseInt(data.substring(2 * (index+1), 2 * (index+1) + 2), 16).toFloat() / 100
-                    val pow = abs((parseInt -a) /b)
-                    val reading = 10.toDouble().pow(pow)
-                    val nf: NumberFormat = NumberFormat.getNumberInstance()
+                val parseInt =
+                    Integer.parseInt(data.substring(2 * (index+1), 2 * (index+1) + 2), 16).toFloat() / 100
+                val pow = abs((parseInt -a) /b)
+                val reading = 10.toDouble().pow(pow)
+                val nf: NumberFormat = NumberFormat.getNumberInstance()
 
-                    nf.maximumFractionDigits = 2
-                    nf.roundingMode = RoundingMode.UP
-                    val format: String = nf.format(reading)
-                    readingsEntity.readings = parseInt.toString()
-                    mAdapter.notifyItemChanged(index)
-                    DbUtils.insertSensor(SensorTable().apply {
-                        type = index
-                        value = parseInt
-                        create_time = System.currentTimeMillis()
-                    })
-                }
+                nf.maximumFractionDigits = 2
+                nf.roundingMode = RoundingMode.UP
+                val format: String = nf.format(reading)
+                readingsEntity.readings = parseInt.toString()
+                mAdapter.notifyItemChanged(index)
+                DbUtils.insertSensor(SensorTable().apply {
+                    type = index
+                    value = nf.format(parseInt)
+                    create_time = System.currentTimeMillis()
+                })
             }
         }
     }

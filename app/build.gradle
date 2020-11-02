@@ -94,6 +94,8 @@ dependencies {
     implementation 'com.github.AnyChart:AnyChart-Android:1.1.2'
     implementation 'org.litepal.guolindev:core:3.2.1'
 
+    implementation 'com.ajts.androidmads.SQLite2Excel:library:1.0.4'
+    implementation 'com.blankj:utilcodex:1.29.0'
 
 
 }
