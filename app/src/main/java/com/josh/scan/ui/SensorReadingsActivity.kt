@@ -76,7 +76,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
         mAdapter.adapterAnimation = SlideInBottomAnimation()
         mAdapter.setNewInstance(readingList)
         mAdapter.addChildClickViewIds(R.id.sensorCl)
-
+        startTimer()
     }
 
     override fun initData() {
@@ -114,7 +114,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
 
     override fun onItemChildClick(adapter: BaseQuickAdapter<*, *>, view: View, position: Int) {
         startActivity(Intent(this, AnalyseTrendsActivity::class.java).apply {
-            putExtra(AnalyseTrendsActivity.SENSOR_TYPE,position+1)
+            putExtra(AnalyseTrendsActivity.SENSOR_TYPE,position)
         })
     }
 

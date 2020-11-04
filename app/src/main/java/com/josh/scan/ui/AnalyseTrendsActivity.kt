@@ -8,8 +8,6 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.core.content.ContextCompat
-import com.ajts.androidmads.library.SQLiteToExcel
-import com.ajts.androidmads.library.SQLiteToExcel.ExportListener
 import com.anychart.AnyChart
 import com.anychart.chart.common.dataentry.DataEntry
 import com.anychart.chart.common.dataentry.ValueDataEntry
@@ -28,6 +26,7 @@ import com.josh.scan.utils.DateUtils
 import com.josh.scan.utils.DbUtils
 import com.josh.scan.utils.LoadDialogUtils
 import com.josh.scan.utils.StatusBarUtil
+import com.liyu.sqlitetoexcel.SQLiteToExcel
 import com.tbruyelle.rxpermissions3.RxPermissions
 import kotlinx.android.synthetic.main.activity_analyse_trends.*
 import java.io.File
@@ -180,20 +179,27 @@ class AnalyseTrendsActivity :BaseActivity() {
             file.mkdir()
         }
         FileUtils.createOrExistsFile(directoryPath)
-        SQLiteToExcel(this,"sensors.db",directoryPath).exportSingleTable("sensortable","sensortable.xls", object : ExportListener {
-            override fun onStart() {
-                LoadDialogUtils.showDialog(this@AnalyseTrendsActivity,"")
-            }
-            override fun onCompleted(filePath: String) {
-                ToastUtils.showLong("文件导出位置:$filePath")
-                LoadDialogUtils.dismissDialog()
-            }
-            override fun onError(e: Exception) {
-                Log.e("lanzhu",e.message)
-                ToastUtils.showShort("导出出错${e.message}")
-                LoadDialogUtils.dismissDialog()
-            }
-        })
+        SQLiteToExcel
+            .Builder(this)
+            .setDataBase(getDatabasePath("sensors.db").path) //必须。 小提示：内部数据库可以通过 context.getDatabasePath("internal.db").getPath() 获取。
+            .setOutputFileName("sensortable.xls") //可选, 如果不设置，输出的文件名为 xxx.db.xls。
+            .start(object :SQLiteToExcel.ExportListener{
+                override fun onError(e: java.lang.Exception?) {
+                    Log.e("lanzhu",e?.message)
+                    ToastUtils.showShort("导出出错${e?.message}")
+                    LoadDialogUtils.dismissDialog()
+                }
+
+                override fun onStart() {
+                    LoadDialogUtils.showDialog(this@AnalyseTrendsActivity,"")
+                }
+
+                override fun onCompleted(filePath: String?) {
+                    ToastUtils.showLong("文件导出位置:$filePath")
+                    LoadDialogUtils.dismissDialog()
+                }
+
+            }); // 或者使用 .start() 同步方法。
     }
 
 
