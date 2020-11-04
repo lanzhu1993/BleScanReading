@@ -28,7 +28,7 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/mainConnectStateTv"
         android:layout_marginTop="@dimen/dp_10"
-        android:text="Disconnect接"
+        android:text="Disconnect"
         android:background="@drawable/shape_grey_frame"
         android:visibility="invisible"/>
 

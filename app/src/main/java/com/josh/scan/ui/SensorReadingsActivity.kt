@@ -144,7 +144,6 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
                 nf.roundingMode = RoundingMode.UP
                 val format: String = nf.format(reading)
                 readingsEntity.readings = parseInt.toString()
-                mAdapter.notifyItemChanged(index)
                 DbUtils.insertSensor(SensorTable().apply {
                     type = index
                     value = nf.format(parseInt)
@@ -152,14 +151,16 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
                 })
             }
         }
+        mAdapter.setNewInstance(readingList)
+        mAdapter.notifyDataSetChanged()
     }
 
     private fun startTimer() {
         timer = fixedRateTimer("", false, 0, 10000) {
             runOnUiThread {
                 ToastUtils.showToast("Start")
+                getSensorReadings()
             }
-            getSensorReadings()
         }
     }
 
@@ -189,10 +190,11 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
                                     characteristic: BluetoothGattCharacteristic
                                 ) {
                                     super.onReadSuccess(dedvice, characteristic)
-                                    ToastUtils.showToast("Receive data is :${ByteUtils.bytes2HexStr(characteristic.value)}")
                                     runOnUiThread {
+                                        ToastUtils.showToast("Receive data is :${ByteUtils.bytes2HexStr(characteristic.value)}")
                                         showSensorReadingData(ByteUtils.bytes2HexStr(characteristic.value))
                                     }
+
                                 }
 
                                 override fun onReadFailed(device: BleDevice?, failedCode: Int) {
