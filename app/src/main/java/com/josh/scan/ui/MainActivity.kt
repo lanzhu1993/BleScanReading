@@ -18,6 +18,7 @@ import cn.com.heaton.blelibrary.ble.utils.ByteUtils
 import com.josh.scan.R
 import com.josh.scan.base.BaseActivity
 import com.josh.scan.ui.BluetoothScanActivity.Companion.EXTRA_TAG
+import com.josh.scan.ui.SensorReadingsActivity.Companion.BLE_DEVICE
 import com.josh.scan.ui.SensorReadingsActivity.Companion.GATT_SERVICE
 import com.josh.scan.utils.StatusBarUtil
 import com.josh.scan.utils.ToastUtils
@@ -70,6 +71,7 @@ class MainActivity : BaseActivity()  {
             }
             startActivity(Intent(this,SensorReadingsActivity::class.java).apply {
                 putExtra(GATT_SERVICE,gattServices)
+                putExtra(BLE_DEVICE,bleDevice)
             })
         }
     }
