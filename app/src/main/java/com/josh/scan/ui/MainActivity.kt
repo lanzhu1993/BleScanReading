@@ -46,7 +46,7 @@ class MainActivity : BaseActivity()  {
 
     override fun initView() {
         StatusBarUtil.setColor(this, ContextCompat.getColor(this, R.color.color_0A5566), 0)
-        supportActionBar?.title = "首页"
+        supportActionBar?.title = "Perspiration Analysis"
     }
 
     override fun initData() {
@@ -92,7 +92,7 @@ class MainActivity : BaseActivity()  {
     private val connectCallback = object : BleConnectCallback<BleDevice>(){
 
         override fun onConnectTimeOut(device: BleDevice?) {
-            ToastUtils.showToast("连接超时:" + device!!.bleName)
+            ToastUtils.showToast("connection timed out :" + device!!.bleName)
 
         }
 
@@ -115,7 +115,7 @@ class MainActivity : BaseActivity()  {
                     Log.e("lanzhu", "onChanged==data:" + ByteUtils.toHexString(characteristic.value))
                     runOnUiThread {
                         ToastUtils.showToast(
-                            String.format("收到设备通知数据: %s", ByteUtils.toHexString(characteristic.value))
+                            String.format("Bluetooth data received: %s", ByteUtils.toHexString(characteristic.value))
                         )
                     }
                 }
@@ -130,19 +130,19 @@ class MainActivity : BaseActivity()  {
             device?.let {
                 when {
                     device.isConnected -> {
-                        mainConnectStateTv.text = "状态：已连接"
+                        mainConnectStateTv.text = "Status: Connected"
                         mainDisConnectBtn.visibility = View.VISIBLE
                     }
                     device.isConnecting -> {
-                        mainConnectStateTv.text = "状态：连接中..."
+                        mainConnectStateTv.text = "Status: Connecting..."
                         mainDisConnectBtn.visibility = View.INVISIBLE
                     }
                     device.isDisconnected -> {
-                        mainConnectStateTv.text = "状态：未连接"
+                        mainConnectStateTv.text = "Status: Not connected"
                         mainDisConnectBtn.visibility = View.INVISIBLE
                     }
                     device.isDisconnected ->{
-                        mainConnectStateTv.text = "状态：断开连接"
+                        mainConnectStateTv.text = "Status: Disconnect"
                         mainDisConnectBtn.visibility = View.INVISIBLE
                     }
                 }
@@ -152,7 +152,7 @@ class MainActivity : BaseActivity()  {
 
 
         override fun onConnectException(device: BleDevice?, errorCode: Int) {
-            ToastUtils.showToast("连接异常，异常状态码:$errorCode")
+            ToastUtils.showToast("Abnormal connection:$errorCode")
 
         }
 

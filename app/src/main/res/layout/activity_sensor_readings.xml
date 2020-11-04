@@ -23,7 +23,7 @@
         android:layout_marginTop="@dimen/dp_20"
         android:layout_marginBottom="@dimen/dp_20"
         android:background="@drawable/shape_grey_frame"
-        android:text="开始"
+        android:text="Start"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/mSensorPauseBtn"
@@ -37,7 +37,7 @@
         android:layout_marginTop="@dimen/dp_20"
         android:layout_marginBottom="@dimen/dp_20"
         android:background="@drawable/shape_grey_frame"
-        android:text="暂停"
+        android:text="Pause"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@+id/mSensorStartBtn"
         app:layout_constraintRight_toLeftOf="@+id/mSensorTrackBtn" />
@@ -50,7 +50,7 @@
         android:layout_marginTop="@dimen/dp_20"
         android:layout_marginBottom="@dimen/dp_20"
         android:background="@drawable/shape_grey_frame"
-        android:text="追踪"
+        android:text="Track"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@+id/mSensorPauseBtn"
         app:layout_constraintRight_toRightOf="parent" />

@@ -68,7 +68,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
 
     override fun initView() {
         StatusBarUtil.setColor(this, ContextCompat.getColor(this, R.color.color_0A5566), 0)
-        supportActionBar?.title = "查看数值"
+        supportActionBar?.title = "Perspiration Analysis"
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         //初始化列表
         mSensorRecyclerView.layoutManager = GridLayoutManager(this, 2)
@@ -88,12 +88,12 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
             "$time}"
         )
         Log.e("lanzhu", "time is : $time")
-        readingList.add(ReadingsEntity("钠", "暂无～"))
-        readingList.add(ReadingsEntity("钾", "暂无～"))
-        readingList.add(ReadingsEntity("钙", "暂无～"))
-        readingList.add(ReadingsEntity("葡萄糖", "暂无～"))
-        readingList.add(ReadingsEntity("乳酸", "暂无～"))
-        readingList.add(ReadingsEntity("pH值", "暂无～"))
+        readingList.add(ReadingsEntity("Sodium", "Not yet～"))
+        readingList.add(ReadingsEntity("Potassium", "Not yet～"))
+        readingList.add(ReadingsEntity("Calcium", "Not yet～"))
+        readingList.add(ReadingsEntity("Glucose", "Not yet～"))
+        readingList.add(ReadingsEntity("Lactate", "Not yet～"))
+        readingList.add(ReadingsEntity("pH", "Not yet～"))
     }
 
 
@@ -157,7 +157,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
     private fun startTimer() {
         timer = fixedRateTimer("", false, 0, 10000) {
             runOnUiThread {
-                ToastUtils.showToast("开始追踪")
+                ToastUtils.showToast("Start")
             }
             getSensorReadings()
         }
@@ -166,7 +166,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
     private fun stopTimer() {
         timer?.cancel()
         runOnUiThread {
-            ToastUtils.showToast("结束追踪")
+            ToastUtils.showToast("Pause")
         }
     }
 
@@ -189,6 +189,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
                                     characteristic: BluetoothGattCharacteristic
                                 ) {
                                     super.onReadSuccess(dedvice, characteristic)
+                                    ToastUtils.showToast("Receive data is :${ByteUtils.bytes2HexStr(characteristic.value)}")
                                     runOnUiThread {
                                         showSensorReadingData(ByteUtils.bytes2HexStr(characteristic.value))
                                     }
@@ -196,7 +197,7 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
 
                                 override fun onReadFailed(device: BleDevice?, failedCode: Int) {
                                     super.onReadFailed(device, failedCode)
-                                    ToastUtils.showToast("读取特征失败:$failedCode")
+                                    ToastUtils.showToast("Failed to read feature:$failedCode")
                                 }
                             })
                     }
@@ -212,12 +213,12 @@ class SensorReadingsActivity : BaseActivity(), OnItemChildClickListener {
                                     device: BleDevice?,
                                     characteristic: BluetoothGattCharacteristic
                                 ) {
-                                    ToastUtils.showToast("写入特征成功")
+                                    ToastUtils.showToast("Writing feature succeeded")
                                 }
 
                                 override fun onWriteFailed(device: BleDevice?, failedCode: Int) {
                                     super.onWriteFailed(device, failedCode)
-                                    ToastUtils.showToast("写入特征失败:$failedCode")
+                                    ToastUtils.showToast("Write feature failure:$failedCode")
                                 }
                             })
                     }

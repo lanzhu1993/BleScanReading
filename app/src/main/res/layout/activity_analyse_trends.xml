@@ -16,7 +16,7 @@
         android:textStyle="bold"
         android:textColor="@color/color_white"
         android:textSize="@dimen/sp_24"
-        android:text="趋势图"
+        android:text="Trends"
         android:layout_marginTop="@dimen/dp_20"
         android:layout_marginLeft="@dimen/dp_20"/>
 

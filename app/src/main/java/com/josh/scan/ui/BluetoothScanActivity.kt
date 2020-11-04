@@ -48,7 +48,7 @@ class BluetoothScanActivity : BaseActivity(), OnItemChildClickListener {
 
     override fun initView() {
         StatusBarUtil.setColor(this, ContextCompat.getColor(this, R.color.color_0A5566), 0)
-        supportActionBar?.title = "设备连接"
+        supportActionBar?.title = "Device connection"
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         //初始化列表
         mScanRecyclerView.layoutManager = LinearLayoutManager(this)

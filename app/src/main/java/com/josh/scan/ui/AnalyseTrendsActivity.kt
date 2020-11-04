@@ -54,7 +54,7 @@ class AnalyseTrendsActivity :BaseActivity() {
 
     override fun initView() {
         StatusBarUtil.setColor(this, ContextCompat.getColor(this, R.color.color_0A5566), 0)
-        supportActionBar?.title = "数据分析"
+        supportActionBar?.title = "Perspiration Analysis"
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         val cartesian = AnyChart.line()
         cartesian.animation(true)
